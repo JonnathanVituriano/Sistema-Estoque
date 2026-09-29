@@ -1,101 +1,194 @@
-# Sistema de Estoque de Produtos — Java ☕
+<div align="center">
 
-Projeto desenvolvido como exercício prático de Programação Orientada a Objetos (POO) em Java, demonstrando a aplicação sólida de:
-- **Classes Abstratas**
-- **Herança**
-- **Interfaces**
-- **Polimorfismo Dinâmico (Sobrescrita)**
-- **Polimorfismo Estático (Sobrecarga)**
-- **Composição**
-- **Tratamento e Hierarquia de Exceções Personalizadas**
+# 📦 Sistema de Gerenciamento de Estoque
+
+**Uma aplicação em Java orientada a objetos demonstrando arquitetura limpa, polimorfismo e tratamento robusto de exceções.**
+
+[![Java Version](https://img.shields.io/badge/Java-17%2B-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
+[![Paradigma](https://img.shields.io/badge/Paradigma-POO-007ACC?style=for-the-badge)](https://pt.wikipedia.org/wiki/Programa%C3%A7%C3%A3o_orientada_a_objetos)
+[![Status](https://img.shields.io/badge/Status-Conclu%C3%ADdo-success?style=for-the-badge)](#)
+[![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-green?style=for-the-badge)](#)
 
 ---
 
-## 📁 Estrutura do Repositório
+[Sobre o Projeto](#-sobre-o-projeto) •
+[Pilares de POO](#-conceitos-de-poo-aplicados) •
+[Diagrama UML](#-diagrama-de-classes-uml) •
+[Estrutura](#-estrutura-do-projeto) •
+[Como Executar](#-como-executar) •
+[Demonstração](#-demonstração-da-execução) •
+[Autor](#-autor)
+
+---
+
+</div>
+
+## 📌 Sobre o Projeto
+
+O **Sistema de Estoque** é um projeto desenvolvido para consolidar e demonstrar, de forma prática e aprofundada, os principais pilares da **Programação Orientada a Objetos (POO)** em Java.
+
+O software simula operações de gerenciamento de itens, cálculo polimórfico de valores em estoque, venda com validação de disponibilidade, políticas de desconto sobrecarregadas e uma hierarquia customizada de tratamento de exceções.
+
+### 🌟 Destaques do Sistema
+- **Catálogo Misto**: Suporte a produtos convencionais e produtos perecíveis com regras de expiração.
+- **Desconto Inteligente por Validade**: Produtos perecíveis a 3 dias ou menos do vencimento recebem **20% de desconto automático** no subtotal.
+- **Sobrecarga de Métodos**: Flexibilidade para aplicar descontos percentuais diretos ou com limite monetário (teto máximo).
+- **Tratamento Resiliente**: Prevenção de estados inconsistentes (preço negativo, estoque insuficiente ou negativo) através de exceções checadas personalizadas.
+
+---
+
+## 🧠 Conceitos de POO Aplicados
+
+| Conceito | Onde é aplicado | Descrição |
+| :--- | :--- | :--- |
+| **Encapsulamento** | `Product`, `ProdutoPerecivel` | Atributos privados protegidos por getters e setters com validações de regras de negócio. |
+| **Abstração** | `Product` | Classe abstrata que serve de modelo base, definindo o contrato obrigatório `calcularValorTotal()`. |
+| **Interfaces** | `Vendavel` | Define o contrato de comercialização (`vender(int quantidade)`). |
+| **Herança** | `ProdutoComum`, `ProdutoPerecivel` | Subclasses especializadas que reutilizam e estendem os atributos e comportamentos de `Product`. |
+| **Polimorfismo Dinâmico** | `calcularValorTotal()`, `getDescricao()` | Sobrescrita de métodos onde cada tipo de produto calcula seu valor conforme sua especificidade (regra de validade). |
+| **Polimorfismo Estático** | `aplicarDesconto(...)` | Sobrecarga de método na classe `Product` com assinaturas diferentes para cálculos com e sem teto máximo. |
+| **Composição** | `Estoque` | Relação de *"Tem-um"* (`List<Product>`), promovendo baixo acoplamento e flexibilidade. |
+| **Hierarquia de Exceções** | `EstoqueException` e filhas | Criação de exceções de domínio e demonstração prática da ordem mandatória de blocos `catch`. |
+
+> [!IMPORTANT]
+> **Hierarquia de Tratamento de Exceções (Catch Order):**
+> No Java, blocos `catch` mais específicos (`QuantidadeInvalidaException`, `ProdutoIndisponivelException`) devem obrigatoriamente preceder a exceção genérica (`EstoqueException`). Inverter essa ordem gera erro de compilação por código inalcançável (*unreachable code*).
+
+---
+
+## 🏗️ Diagrama de Classes (UML)
+
+```mermaid
+classDiagram
+    direction TB
+
+    class Vendavel {
+        <<interface>>
+        +vender(int quantidadeDesejada) void
+    }
+
+    class Product {
+        <<abstract>>
+        -String nome
+        -double preco
+        -int quantidade
+        +getNome() String
+        +setNome(String nome) void
+        +getPreco() double
+        +setPreco(double preco) void
+        +getQuantidade() int
+        +setQuantidade(int quantidade) void
+        +calcularValorTotal()* double
+        +getDescricao() String
+        +vender(int quantidadeDesejada) void
+        +aplicarDesconto(double percentual) void
+        +aplicarDesconto(double percentual, double descontoMaximo) void
+    }
+
+    class ProdutoComum {
+        +calcularValorTotal() double
+    }
+
+    class ProdutoPerecivel {
+        -int diasParaVencer
+        +getDiasParaVencer() int
+        +setDiasParaVencer(int dias) void
+        +calcularValorTotal() double
+        +getDescricao() String
+    }
+
+    class Estoque {
+        -List~Product~ produtos
+        +adicionarProduto(Product p) void
+        +venderProduto(int indice, int quantidade) void
+        +calcularValorTotalEstoque() double
+        +getProdutos() List~Product~
+        +getQuantidadeItensCadastrados() int
+        +exibirEstoque() void
+    }
+
+    Vendavel <|.. Product : implements
+    Product <|-- ProdutoComum : extends
+    Product <|-- ProdutoPerecivel : extends
+    Estoque o-- Product : composition (1..*)
+```
+
+### Hierarquia de Exceções de Domínio
+
+```mermaid
+classDiagram
+    direction TB
+
+    class Exception {
+        <<checked>>
+    }
+
+    class EstoqueException {
+        <<exceção base>>
+    }
+
+    class QuantidadeInvalidaException {
+        <<específica: valores negativos>>
+    }
+
+    class ProdutoIndisponivelException {
+        <<específica: estoque insuficiente>>
+    }
+
+    Exception <|-- EstoqueException
+    EstoqueException <|-- QuantidadeInvalidaException
+    EstoqueException <|-- ProdutoIndisponivelException
+```
+
+---
+
+## 📁 Estrutura do Projeto
 
 ```text
 sistema-estoque/
 ├── .gitignore
 ├── README.md
 └── src/
-    ├── EstoqueException.java             # Exceção base do domínio de estoque
-    ├── QuantidadeInvalidaException.java  # Exceção para quantidades/preços inválidos (< 0)
-    ├── ProdutoIndisponivelException.java # Exceção para tentativas de venda sem estoque
+    ├── EstoqueException.java             # Exceção base de domínio (checked)
+    ├── QuantidadeInvalidaException.java  # Exceção para quantidades/preços negativos
+    ├── ProdutoIndisponivelException.java # Exceção para venda com saldo insuficiente
     ├── Vendavel.java                     # Interface de contrato para itens vendáveis
-    ├── Product.java                      # Classe abstrata base com encapsulamento e sobrecarga
+    ├── Product.java                      # Classe abstrata base com encapsulamento e sobrecargas
     ├── ProdutoComum.java                 # Subclasse comum com cálculo direto de valor
-    ├── ProdutoPerecivel.java             # Subclasse perecível com validade e desconto de 20%
-    ├── Estoque.java                      # Classe com composição (TEM UMA List<Product>)
-    └── EstoqueApp.java                   # Aplicação principal (main) demonstrando cenários e catches
+    ├── ProdutoPerecivel.java             # Subclasse perecível (desconto de 20% se validade <= 3)
+    ├── Estoque.java                      # Composição do acervo e operações em lote
+    └── EstoqueApp.java                   # Classe executável com cenários e testes demonstrativos
 ```
 
 ---
 
-## 🧩 Conceitos de Orientação a Objetos Aplicados
-
-### 1. Hierarquia de Exceções (`EstoqueException`, `QuantidadeInvalidaException`, `ProdutoIndisponivelException`)
-- `EstoqueException` estende `Exception` (checked exception), servindo como base genérica para qualquer erro operacional do estoque.
-- `QuantidadeInvalidaException` herda de `EstoqueException` e é disparada caso valores numéricos como preço ou quantidade sejam negativos.
-- `ProdutoIndisponivelException` herda de `EstoqueException` e é disparada caso a quantidade solicitada para venda exceda o estoque disponível.
-- **Ordem dos blocos catch**: No tratamento de exceções, os blocos mais específicos (`QuantidadeInvalidaException`, `ProdutoIndisponivelException`) são posicionados antes do bloco genérico (`EstoqueException`), prevenindo código inalcançável (unreachable code).
-
-### 2. Interface (`Vendavel`)
-Define o contrato de venda para qualquer item comercializável no sistema:
-```java
-public interface Vendavel {
-    void vender(int quantidadeDesejada) throws ProdutoIndisponivelException;
-}
-```
-
-### 3. Classe Abstrata e Encapsulamento (`Product`)
-- Implementa `Vendavel`.
-- Possui atributos privados (`nome`, `preco`, `quantidade`) acessíveis apenas via métodos getters e setters que validam a consistência dos dados.
-- O construtor valida e impede a criação de produtos com preço ou estoque negativos.
-- Fornece o método abstrato `public abstract double calcularValorTotal();` para forçar as subclasses a implementarem sua própria regra de negócio.
-- Fornece o método concreto `getDescricao()` formatado.
-
-### 4. Polimorfismo Estático — Sobrecarga (`aplicarDesconto`)
-Na classe `Product`, duas assinaturas do mesmo método coexistem com propósitos distintos:
-1. `aplicarDesconto(double percentual)`: Aplica um percentual direto sobre o preço unitário.
-2. `aplicarDesconto(double percentual, double descontoMaximo)`: Aplica o percentual, porém limitando o abatimento a um valor financeiro máximo especificado.
-
-### 5. Herança e Polimorfismo Dinâmico — Sobrescrita
-- `ProdutoComum extends Product`:
-  - Implementa `calcularValorTotal()` retornando `preco * quantidade`.
-- `ProdutoPerecivel extends Product`:
-  - Possui o atributo adicional `diasParaVencer`.
-  - Sobrescreve `calcularValorTotal()` aplicando **20% de desconto automático** se `diasParaVencer <= 3`.
-  - Sobrescreve `getDescricao()` para incluir a validade do lote e o aviso promocional.
-
-### 6. Composição (`Estoque`)
-- A classe `Estoque` **não herda** de `Product`, mas sim **TEM UMA lista** (`List<Product>`).
-- No método `calcularValorTotalEstoque()`, o estoque itera pela lista e chama `p.calcularValorTotal()`. Graças ao polimorfismo dinâmico em tempo de execução, cada objeto calcula seu total com base na sua implementação específica (comum ou perecível), desacoplando o estoque dos detalhes de cada tipo.
-
----
-
-## 🚀 Como Compilar e Executar
+## 🚀 Como Executar
 
 ### Pré-requisitos
-- JDK 8 ou superior instalado (JDK 11, 17 ou 21 recomendados).
+- **Java JDK 11+** (JDK 17 ou 21 recomendados)
+- **Git** instalado no terminal
 
-### Passo 1: Navegar até o diretório do projeto
+### 1. Clonar o Repositório
 ```bash
-cd sistema-estoque/src
+git clone https://github.com/JonnathanVituriano/Sistema-Estoque.git
+cd Sistema-Estoque/src
 ```
 
-### Passo 2: Compilar todas as classes
+### 2. Compilar os Arquivos Java
 ```bash
 javac *.java
 ```
 
-### Passo 3: Executar a aplicação principal
+### 3. Executar o Programa
 ```bash
 java EstoqueApp
 ```
 
 ---
 
-## 🖥️ Exemplo de Saída Esperada no Console
+## 🖥️ Demonstração da Execução
+
+Ao rodar a aplicação `EstoqueApp`, todos os cenários são exercitados e validados no console:
 
 ```text
 ========================================================================
@@ -143,7 +236,16 @@ Tentando vender 15 unidades do Teclado Mecânico (disponível: 7)...
 ✓ Exceção esperada capturada com sucesso!
   [ProdutoIndisponivelException]: Estoque insuficiente para 'Teclado Mecânico'. Solicitado: 15, Disponível: 7
 
->>> 6. RELATÓRIO FINAL DO ESTOQUE E POLIMORFISMO
+>>> 6. DEMONSTRAÇÃO DA HIERARQUIA DE CATCHES (Bloco Unificado)
+Executando operação controlada com múltiplos riscos de exceção:
+Testando operação (índice: 0, quantidade: -2)...
+  -> [CATCH ESPECÍFICO 1 - QuantidadeInvalidaException]: A quantidade solicitada deve ser maior que zero: -2
+Testando operação (índice: 0, quantidade: 50)...
+  -> [CATCH ESPECÍFICO 2 - ProdutoIndisponivelException]: Estoque insuficiente para 'Teclado Mecânico'. Solicitado: 50, Disponível: 7
+Testando operação (índice: 99, quantidade: 1)...
+  -> [CATCH GENÉRICO 3 - EstoqueException]: Falha operacional: índice de produto fora do estoque (99)
+
+>>> 7. RELATÓRIO FINAL DO ESTOQUE E POLIMORFISMO DINÂMICO
 Observação sobre o cálculo polimórfico:
  - Produtos comuns: Preço Unitário * Quantidade
  - Leite Integral (validade = 2 dias <= 3): Preço Unitário * Quantidade com 20% de desconto automático.
@@ -165,17 +267,8 @@ VALOR TOTAL DO ESTOQUE: R$ 3975,00
 
 ---
 
-## 📤 Como Subir no GitHub
+## 👨‍💻 Autor
 
-Execute no terminal dentro da pasta `sistema-estoque`:
+Desenvolvido por **Jonnathan Vituriano**.
 
-```bash
-git init
-git add .
-git commit -m "feat: implementacao completa do sistema de estoque com POO e excecoes"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git
-git push -u origin main
-```
-#   S i s t e m a - E s t o q u e  
- 
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/JonnathanVituriano)
